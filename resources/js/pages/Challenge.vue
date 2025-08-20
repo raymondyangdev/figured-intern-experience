@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FinancialDashboard from '@/component/FinancialDashboard.vue';
+import FinancialDashboard from '@/components/FinancialDashboard.vue';
 import type { Report } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
@@ -30,7 +30,7 @@ const fetchFinancialData = async () => {
     } finally {
         loading.value = false;
     }
-};  
+};
 
 // Generate AI commentary
 const generateCommentary = async () => {
