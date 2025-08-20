@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Report, ReportColumn } from '@/types';
+import { addAlpha, buildLineOptions, farmColors } from '@/utils/graph';
 import { CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip, type ChartOptions } from 'chart.js';
 import { computed } from 'vue';
 import { Line } from 'vue-chartjs';
@@ -43,23 +44,13 @@ const chartData = computed(() => {
 
     // Add line items
     if (subsection.line_items) {
-        const colors = [
-            '#3B82F6', // blue
-            '#10B981', // green
-            '#F59E0B', // yellow
-            '#EF4444', // red
-            '#8B5CF6', // purple
-            '#06B6D4', // cyan
-            '#F97316', // orange
-            '#84CC16', // lime
-        ];
-
         subsection.line_items.forEach((item, index) => {
+            const color = farmColors[index % farmColors.length];
             datasets.push({
                 label: item.name,
-                data: item.values.slice(0, -1), // Exclude total column
-                borderColor: colors[index % colors.length],
-                backgroundColor: colors[index % colors.length] + '20',
+                data: item.values.slice(0, -1),
+                borderColor: color,
+                backgroundColor: addAlpha(color, '33'),
                 tension: 0.4,
             });
         });
@@ -79,43 +70,7 @@ const chartData = computed(() => {
     return { labels, datasets };
 });
 
-const chartOptions: ChartOptions<'line'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            position: 'top' as const,
-        },
-        title: {
-            display: true,
-            text: 'Financial Performance Over Time',
-        },
-        tooltip: {
-            mode: 'index' as const,
-            intersect: false,
-            callbacks: {
-                label: (context) => {
-                    return `${context.dataset.label}: $${context.parsed.y.toLocaleString()}`;
-                },
-            },
-        },
-    },
-    scales: {
-        y: {
-            beginAtZero: true,
-            ticks: {
-                callback: (value) => {
-                    return `$${Number(value).toLocaleString()}`;
-                },
-            },
-        },
-    },
-    interaction: {
-        mode: 'nearest' as const,
-        axis: 'x' as const,
-        intersect: false,
-    },
-};
+const chartOptions: ChartOptions<'line'> = buildLineOptions('Financial Performance Over Time');
 </script>
 
 <template>
