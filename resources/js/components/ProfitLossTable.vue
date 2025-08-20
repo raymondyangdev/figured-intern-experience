@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// All interfaces are defined here to make the component self-contained.
 export interface ReportCompany {
     name: string;
     report_type: string;
@@ -74,8 +73,6 @@ const formatCurrency = (value: number) => {
 </script>
 
 <style>
-/* You can add custom styles here if needed, but Tailwind handles most of the design */
-/* For this example, we'll rely on the classes in the template */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 html, body {
