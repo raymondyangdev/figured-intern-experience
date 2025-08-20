@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Report } from '@/types';
-import { addAlpha, buildDoughnutOptions, farmColors } from '@/utils/graph';
+import { addAlpha, farmColors } from '@/utils/graph';
+import { buildDoughnutOptions } from '@/utils/graph/options';
 import { ArcElement, CategoryScale, Chart as ChartJS, Legend, Title, Tooltip } from 'chart.js';
 import { computed } from 'vue';
 import { Doughnut } from 'vue-chartjs';

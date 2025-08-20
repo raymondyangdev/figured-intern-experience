@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Report } from '@/types';
-import { addAlpha, buildBarOptions, farmColors } from '@/utils/graph';
+import { addAlpha, farmColors } from '@/utils/graph';
+import { buildBarOptions } from '@/utils/graph/options';
 import { ArcElement, BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from 'chart.js';
 import { computed } from 'vue';
 import { Bar } from 'vue-chartjs';
