@@ -1,30 +1,210 @@
-<template>
-    <div class="overflow-x-auto">
-        <table class="min-w-full border border-gray-300">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th v-for="(header, index) in props.reportData.columns" :key="index" class="border px-4 py-2 text-left">
-                        {{ header }}
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(row, rowIndex) in props.reportData.sections" :key="rowIndex">
-                    <td v-for="(cell, cellIndex) in row" :key="cellIndex" class="border px-4 py-2 text-right">
-                        {{ cell }}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</template>
-
 <script setup lang="ts">
-import type { Report } from '@/types';
+// All interfaces are defined here to make the component self-contained.
+export interface ReportCompany {
+    name: string;
+    report_type: string;
+    basis: string;
+    period: string;
+    actuals_to: string;
+}
+
+export interface ReportColumn {
+    month: string;
+    type: 'Actual' | 'Forecast' | 'Total';
+}
+
+export interface ReportLineItem {
+    name: string;
+    account_id: string;
+    values: number[];
+}
+
+export interface ReportSubsection {
+    id: string;
+    name: string;
+    level: number;
+    collapsible: boolean;
+    expanded: boolean;
+    subsections?: ReportSubsection[];
+    line_items?: ReportLineItem[];
+    gross_profit?: ReportTotal;
+}
+
+export interface ReportSection {
+    id: string;
+    name: string;
+    level: number;
+    collapsible: boolean;
+    expanded: boolean;
+    subsections: ReportSubsection[];
+    total: ReportTotal;
+}
+
+export interface ReportTotal {
+    name: string;
+    values: number[];
+}
+
+export interface ReportSummary {
+    name: string;
+    values: number[];
+}
+
+export interface Report {
+    company: ReportCompany;
+    columns: ReportColumn[];
+    sections: ReportSection[];
+    summary: ReportSummary[];
+}
 
 interface Props {
-    reportData: Report;
+  report: Report;
 }
 
 const props = defineProps<Props>();
+
+// Function to format numbers as currency
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0
+  }).format(value);
+};
 </script>
+
+<style>
+/* You can add custom styles here if needed, but Tailwind handles most of the design */
+/* For this example, we'll rely on the classes in the template */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+html, body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+</style>
+
+<template>
+  <div class="p-4 sm:p-8 bg-gray-100 min-h-screen font-sans antialiased text-gray-800">
+    <div class="max-w-7xl mx-auto rounded-lg shadow-2xl overflow-hidden">
+      <!-- Report Header -->
+      <div class="bg-blue-600 text-white p-6 sm:p-8">
+        <h1 class="text-xl sm:text-3xl font-bold tracking-tight">{{ props.report.company.name }}</h1>
+        <p class="text-sm sm:text-base opacity-90 mt-1">
+          {{ props.report.company.report_type }} - {{ props.report.company.basis }}
+        </p>
+        <p class="text-xs sm:text-sm opacity-70 mt-0.5">
+          For the period {{ props.report.company.period }}
+        </p>
+      </div>
+
+      <!-- Report Table -->
+      <div class="overflow-x-auto bg-white">
+        <table class="min-w-full">
+          <!-- Table Headers -->
+          <thead>
+            <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider text-xs">
+              <th class="px-6 py-3 text-left">
+                Name
+              </th>
+              <th v-for="(col, index) in props.report.columns"
+                  :key="index"
+                  class="px-6 py-3 text-right">
+                <span class="font-bold">{{ col.month }}</span>
+                <br />
+                <span class="font-normal">{{ col.type }}</span>
+              </th>
+            </tr>
+          </thead>
+
+          <!-- Table Body -->
+          <tbody class="text-sm">
+            <!-- Sections -->
+            <template v-for="section in props.report.sections" :key="section.id">
+              <!-- Section Row -->
+              <tr class="bg-gray-100 font-bold border-t border-b border-gray-300">
+                <td class="px-6 py-3" :colspan="props.report.columns.length + 1">
+                  {{ section.name }}
+                </td>
+              </tr>
+
+              <!-- Subsections & Line Items -->
+              <template v-for="sub in section.subsections" :key="sub.id">
+                <!-- Subsection Row -->
+                <tr class="bg-gray-50">
+                  <td class="px-6 py-2 font-semibold text-gray-700 pl-8">
+                    {{ sub.name }}
+                  </td>
+                  <td v-for="(value, i) in sub.line_items?.[0]?.values || []"
+                      :key="i"
+                      class="px-6 py-2 text-right"
+                      :class="{ 'text-red-600': value < 0, 'text-green-600': value > 0 }">
+                    {{ formatCurrency(value) }}
+                  </td>
+                </tr>
+                
+                <!-- Line Items -->
+                <tr v-for="item in sub.line_items || []"
+                    :key="item.account_id"
+                    class="even:bg-white odd:bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <td class="px-6 py-2 pl-12">
+                    {{ item.name }}
+                  </td>
+                  <td v-for="(value, i) in item.values"
+                      :key="i"
+                      class="px-6 py-2 text-right"
+                      :class="{ 'text-red-600': value < 0, 'text-green-600': value > 0 }">
+                    {{ formatCurrency(value) }}
+                  </td>
+                </tr>
+
+                <!-- Subsection Gross Profit (if it exists) -->
+                <tr v-if="sub.gross_profit">
+                  <td class="px-6 py-2 font-semibold text-gray-700 pl-12 border-t border-gray-200">
+                    {{ sub.gross_profit.name }}
+                  </td>
+                  <td v-for="(value, i) in sub.gross_profit.values"
+                      :key="i"
+                      class="px-6 py-2 text-right font-semibold border-t border-gray-200"
+                      :class="{ 'text-red-600': value < 0, 'text-green-600': value > 0 }">
+                    {{ formatCurrency(value) }}
+                  </td>
+                </tr>
+              </template>
+
+              <!-- Section Total -->
+              <tr class="font-bold bg-gray-100 border-t-2 border-gray-300">
+                <td class="px-6 py-3">
+                  {{ section.total.name }}
+                </td>
+                <td v-for="(value, i) in section.total.values"
+                    :key="i"
+                    class="px-6 py-3 text-right"
+                    :class="{ 'text-red-600': value < 0, 'text-green-600': value > 0 }">
+                  {{ formatCurrency(value) }}
+                </td>
+              </tr>
+            </template>
+
+            <!-- Summary -->
+            <tr v-for="sum in props.report.summary"
+                :key="sum.name"
+                class="font-extrabold bg-blue-50 text-blue-800 border-t-2 border-blue-200">
+              <td class="px-6 py-3">
+                {{ sum.name }}
+              </td>
+              <td v-for="(value, i) in sum.values"
+                  :key="i"
+                  class="px-6 py-3 text-right"
+                  :class="{ 'text-red-600': value < 0, 'text-green-600': value > 0 }">
+                {{ formatCurrency(value) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</template>
+

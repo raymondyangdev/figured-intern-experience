@@ -101,7 +101,7 @@ onMounted(() => {
                 <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                     <h2 class="mb-4 text-xl font-semibold text-gray-900">{{ reportData.company.name }}</h2>
                     <div class="text-sm text-gray-600">{{ reportData.company.report_type }}</div>
-                  <ProfitLossTable :reportData="reportData"/>
+                  <ProfitLossTable :report="reportData"/>
                     
                 </div>
 
