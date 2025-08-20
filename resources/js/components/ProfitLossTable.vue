@@ -28,10 +28,10 @@ html, body {
 </style>
 
 <template>
-  <div class="p-4 sm:p-8 bg-gray-100 min-h-screen font-sans antialiased text-gray-800">
-    <div class="max-w-7xl mx-auto rounded-lg shadow-2xl overflow-hidden">
+  <div class="min-h-screen font-sans antialiased text-gray-800">
+    <div class="max-w-7xl mx-auto rounbg-gray-100ded-lg shadow-2xl overflow-hidden">
       <!-- Report Header -->
-      <div class="bg-blue-600 text-white p-6 sm:p-8">
+      <div class="rounded-md bg-blue-600 text-white p-6 sm:p-8">
         <h1 class="text-xl sm:text-3xl font-bold tracking-tight">{{ props.report.company.name }}</h1>
         <p class="text-sm sm:text-base opacity-90 mt-1">
           {{ props.report.company.report_type }} - {{ props.report.company.basis }}
