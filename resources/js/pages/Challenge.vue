@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FinancialDashboard from '@/component/FinancialDashboard.vue';
 import type { Report } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
@@ -101,6 +102,16 @@ onMounted(() => {
                     <h2 class="mb-4 text-xl font-semibold text-gray-900">{{ reportData.company.name }}</h2>
                     <div class="text-sm text-gray-600">{{ reportData.company.report_type }}</div>
                 </div>
+
+                <!-- Financial Dashboard -->
+                <div class="rounded-lg border border-blue-200 bg-blue-50 p-6">
+                    <h3 class="mb-3 text-lg font-semibold text-blue-900">📊 Financial Dashboard</h3>
+                    <div class="space-y-2 text-blue-800">
+                        <p>Interactive charts and visualizations of the financial data.</p>
+                    </div>
+                </div>
+
+                <FinancialDashboard :report-data="reportData" />
 
                 <!-- Challenge Instructions -->
                 <div class="rounded-lg border border-blue-200 bg-blue-50 p-6">
