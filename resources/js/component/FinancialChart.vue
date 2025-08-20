@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Report, ReportColumn } from '@/types';
-import { addAlpha, buildLineOptions, farmColors } from '@/utils/graph';
+import { addAlpha, farmColors } from '@/utils/graph';
+import { buildLineOptions } from '@/utils/graph/options';
 import { CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip, type ChartOptions } from 'chart.js';
 import { computed } from 'vue';
 import { Line } from 'vue-chartjs';
