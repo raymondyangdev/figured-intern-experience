@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Report } from '@/types';
+import type { Report, ReportSection, ReportSubsection } from '@/types';
 import { addAlpha, buildBarOptions, buildDoughnutOptions, buildLineOptions, farmColors } from '@/utils/graph';
 import {
     ArcElement,
@@ -14,7 +14,7 @@ import {
     Tooltip,
     type ChartOptions,
 } from 'chart.js';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { Bar, Doughnut, Line } from 'vue-chartjs';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
@@ -24,28 +24,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
-const selectedSection = ref('income');
-const selectedSubsection = ref('sheep');
-
-const availableSections = computed(() => {
-    return (
-        props.reportData?.sections.map((section) => ({
-            id: section.id,
-            name: section.name,
-        })) || []
-    );
-});
-
-const availableSubsections = computed(() => {
-    const section = props.reportData?.sections.find((s) => s.id === selectedSection.value);
-    return (
-        section?.subsections.map((subsection) => ({
-            id: subsection.id,
-            name: subsection.name,
-        })) || []
-    );
-});
 
 const monthsLabels = computed(() => (props.reportData ? props.reportData.columns.map((c) => c.month).slice(0, -1) : []));
 
@@ -133,39 +111,49 @@ const incomeVsExpensesData = computed(() => {
     };
 });
 
-const subsectionBreakdownData = computed(() => {
+const combinedBreakdownData = computed(() => {
     if (!props.reportData) return { labels: [], datasets: [] };
     const labels = monthsLabels.value;
 
-    const section = props.reportData.sections.find((s) => s.id === selectedSection.value);
-    if (!section) return { labels, datasets: [] };
-    const subsection = section.subsections.find((sub) => sub.id === selectedSubsection.value);
-    if (!subsection) return { labels, datasets: [] };
+    const months = props.reportData.columns.length - 1;
 
-    const datasets: Array<{ label: string; data: number[]; backgroundColor: string; borderColor: string }> = [];
-    let colorIndex = 0;
-
-    const collectItems = (subNode: typeof subsection) => {
-        if (subNode.line_items) {
-            subNode.line_items.forEach((item) => {
-                const color = farmColors[colorIndex % farmColors.length];
-                colorIndex += 1;
-                datasets.push({
-                    label: item.name,
-                    data: item.values.slice(0, -1),
-                    backgroundColor: addAlpha(color, '66'),
-                    borderColor: color,
+    const sumSubsection = (node: ReportSubsection, acc: number[]) => {
+        if (node.line_items) {
+            node.line_items.forEach((item) => {
+                item.values.slice(0, months).forEach((v, i) => {
+                    acc[i] += v;
                 });
             });
         }
-        if (subNode.subsections) {
-            subNode.subsections.forEach((child) => collectItems(child as any));
+        if (node.subsections) {
+            node.subsections.forEach((child) => sumSubsection(child, acc));
         }
     };
 
-    collectItems(subsection as any);
+    const buildDatasetsForSection = (sectionId: string, stackKey: string, colorOffset: number) => {
+        const section: ReportSection | undefined = props.reportData!.sections.find((s) => s.id === sectionId);
+        if (!section) return [] as Array<{ label: string; data: number[]; backgroundColor: string; borderColor: string; stack: string }>;
 
-    return { labels, datasets };
+        const datasets: Array<{ label: string; data: number[]; backgroundColor: string; borderColor: string; stack: string }> = [];
+        section.subsections.forEach((top, index) => {
+            const totals = Array.from({ length: months }, () => 0);
+            sumSubsection(top, totals);
+            const color = farmColors[(colorOffset + index) % farmColors.length];
+            datasets.push({
+                label: top.name,
+                data: totals,
+                backgroundColor: addAlpha(color, '66'),
+                borderColor: color,
+                stack: stackKey,
+            });
+        });
+        return datasets;
+    };
+
+    const incomeDatasets = buildDatasetsForSection('income', 'Income', 0);
+    const expenseDatasets = buildDatasetsForSection('operating_expenses', 'Operating Expenses', Math.ceil(farmColors.length / 2));
+
+    return { labels, datasets: [...incomeDatasets, ...expenseDatasets] };
 });
 
 const summaryData = computed(() => {
@@ -185,7 +173,7 @@ const summaryData = computed(() => {
 
 const keyTrendsOptions: ChartOptions<'line'> = buildLineOptions('Key Trends: Operating Surplus & Net Profit');
 const incomeExpenseOptions: ChartOptions<'bar'> = buildBarOptions('Income vs Operating Expenses');
-const breakdownOptions: ChartOptions<'bar'> = buildBarOptions('Selected Subsection Breakdown', true);
+const breakdownOptions: ChartOptions<'bar'> = buildBarOptions('Income & Operating Expenses Breakdown', true);
 const doughnutChartOptions: ChartOptions<'doughnut'> = buildDoughnutOptions('Financial Summary');
 
 const totalRevenue = computed(() => {
@@ -206,29 +194,6 @@ const totalExpenses = computed(() => {
 
 <template>
     <div class="space-y-6">
-        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Section</label>
-                    <select
-                        v-model="selectedSection"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option v-for="section in availableSections" :key="section.id" :value="section.id">{{ section.name }}</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Subsection</label>
-                    <select
-                        v-model="selectedSubsection"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option v-for="subsection in availableSubsections" :key="subsection.id" :value="subsection.id">{{ subsection.name }}</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -269,10 +234,10 @@ const totalExpenses = computed(() => {
             </div>
 
             <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm xl:col-span-2">
-                <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ selectedSection }} – {{ selectedSubsection }} Breakdown</h3>
-                <p class="mb-2 text-sm text-gray-600">Stacked by line item</p>
+                <h3 class="mb-2 text-lg font-semibold text-gray-900">Income & Operating Expenses Breakdown</h3>
+                <p class="mb-2 text-sm text-gray-600">Grouped stacks by top-level subsections</p>
                 <div class="h-96">
-                    <Bar v-if="subsectionBreakdownData.datasets.length > 0" :data="subsectionBreakdownData" :options="breakdownOptions" />
+                    <Bar v-if="combinedBreakdownData.datasets.length > 0" :data="combinedBreakdownData" :options="breakdownOptions" />
                     <div v-else class="flex h-full items-center justify-center text-gray-500">No breakdown available</div>
                 </div>
             </div>
