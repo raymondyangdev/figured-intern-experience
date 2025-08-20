@@ -30,7 +30,7 @@ const fetchFinancialData = async () => {
     } finally {
         loading.value = false;
     }
-};
+};  
 
 // Generate AI commentary
 const generateCommentary = async () => {
