@@ -193,7 +193,7 @@ class FinancialReportController extends Controller
             $prompt = $request->input('prompt', 'Provide general business insights');
 
             $response = Prism::text()
-                ->using('openai', 'gpt-4')
+                ->using('openai', 'gpt-5')
                 ->withPrompt($prompt)
                 ->generate();
 

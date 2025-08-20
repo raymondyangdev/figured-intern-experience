@@ -2,7 +2,7 @@
 import type { Report } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
-
+import AiCommentary from '../components/AiCommentary.vue';
 // Reactive data
 const reportData = ref<Report | null>(null);
 const loading = ref(true);
@@ -29,7 +29,7 @@ const fetchFinancialData = async () => {
     } finally {
         loading.value = false;
     }
-};  
+};
 
 // Generate AI commentary
 const generateCommentary = async () => {
@@ -115,40 +115,7 @@ onMounted(() => {
                 </div>
 
                 <!-- AI Commentary Demo -->
-                <div class="rounded-lg border border-green-200 bg-green-50 p-6">
-                    <h3 class="mb-3 text-lg font-semibold text-green-900">🤖 AI Commentary (Prism Demo)</h3>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label for="ai-prompt" class="mb-2 block text-sm font-medium text-green-800"> Ask AI a question: </label>
-                            <input
-                                id="ai-prompt"
-                                v-model="aiPrompt"
-                                type="text"
-                                placeholder="e.g., What are some general business insights?"
-                                class="w-full rounded-lg border border-green-300 p-3 focus:border-transparent focus:ring-2 focus:ring-green-500"
-                                :disabled="aiLoading"
-                            />
-                        </div>
-
-                        <button
-                            @click="generateCommentary"
-                            :disabled="!aiPrompt.trim() || aiLoading"
-                            class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {{ aiLoading ? 'Generating...' : 'Generate Commentary' }}
-                        </button>
-
-                        <div v-if="aiError" class="rounded-lg border border-red-200 bg-red-50 p-4">
-                            <p class="text-sm text-red-800">{{ aiError }}</p>
-                        </div>
-
-                        <div v-if="aiResponse" class="rounded-lg border border-green-200 bg-white p-4">
-                            <h4 class="mb-2 font-medium text-green-800">AI Response:</h4>
-                            <p class="text-sm whitespace-pre-wrap text-gray-700">{{ aiResponse }}</p>
-                        </div>
-                    </div>
-                </div>
+                <AiCommentary v-if="reportData" :report="reportData" :auto="true" :autoOnChange="true" :debounceMs="700" />
 
                 <!-- Challenge Links -->
                 <div class="border-t border-gray-200 py-8 text-center">
